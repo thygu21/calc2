@@ -43,7 +43,8 @@
                 '!':    "exclamation"
         };
 
-        MathApp.blocks = [];
+        MathApp.blocks = []; //캔버스 전체 블럭 리스트
+        MathApp.blocks.chooseBlock = []; //선택한 블럭 리스트
         MathApp.selected_block = null;
 
         MathApp.is_mouse_dragging = false;       
@@ -164,8 +165,42 @@
                 MathApp.is_mouse_dragging = false;
                 MathApp.mouse_drag_prev = {x:0, y:0};
 
+                if(MathApp.isInBlock(window_p)) // 마우스 뗄때 좌표를 읽어서 조립 
+                {
+                    alert("inblock");
+                    MathApp.addBlock(window_p);
+                }
+
                 MathApp.canvas.requestRenderAll();
             }
+        }
+
+        MathApp.isInBlock = function(window_p) // 블럭 안에 있는지 확인 (미완)
+        {
+            let canvas_p = MathApp.transformToCanvasCoords(window_p);
+
+            let block = MathApp.findBlockOn(canvas_p);
+            if(block != null)
+            {
+                return true;
+            }
+            else 
+                return false;
+        }
+
+        MathApp.addBlock = function(window_p)
+        {
+            let canvas_p = MathApp.transformToCanvasCoords(window_p);
+            let block = MathApp.findBlockOn(canvas_p); //아래에 깔리는 부모가 될 블럭 (여러개일 때?)
+
+            wid = 2;    //블럭 갯수 세서
+            let group = new fabric.Group([block, MathApp.selected_block],
+            {
+                left: SYMBOL_WIDTH * wid,
+                top: SYMBOL_HEIGHT
+            });//
+            canvas.add(group);
+
         }
 
         MathApp.transformToCanvasCoords = function(window_p) {
@@ -177,6 +212,7 @@
             return canvas_p;
         }
         
+
         MathApp.isInCanvas = function(window_p) {
             let rect = MathApp.canvas.getElement().getBoundingClientRect();
             if( window_p.x >= rect.left && 
@@ -203,7 +239,8 @@
                 if( x >= block.position.x - block.size.width/2 &&
                     x <= block.position.x + block.size.width/2 &&
                     y >= block.position.y - block.size.height/2 &&
-                    y <= block.position.y + block.size.height/2 )
+                    y <= block.position.y + block.size.height/2 &&
+                    block != MathApp.selected_block) // 선택된 블럭과 다른 조건 추가
                 {
                     return block;
                 }               
@@ -284,7 +321,7 @@
 
             if (name in MathApp.symbol_paths) 
             {
-                let path = MathApp.symbol_paths[name] + ".jpg";
+                let path = "letter/" + MathApp.symbol_paths[name] + ".jpg";
                 fabric.Image.fromURL(path, function(img) {
                     // (0) Background
                     let background = new fabric.Rect({
