@@ -284,7 +284,7 @@
 
             if (name in MathApp.symbol_paths) 
             {
-                let path = MathApp.symbol_paths[name] + ".jpg";
+                let path = "letter/" + MathApp.symbol_paths[name] + ".jpg";  // 경로 추가
                 fabric.Image.fromURL(path, function(img) {
                     // (0) Background
                     let background = new fabric.Rect({
