@@ -167,24 +167,60 @@
 
                 if(MathApp.isInBlock(window_p)) // 마우스 뗄때 좌표를 읽어서 조립 
                 {
-                    alert("inblock");
-                    MathApp.addBlock(window_p);
+                    
                 }
 
                 MathApp.canvas.requestRenderAll();
             }
         }
 
-        MathApp.isInBlock = function(window_p) // 블럭 안에 있는지 확인 (미완)
+        MathApp.isInBlock = function(window_p) // 블럭 안에 있는지 확인
         {
             let canvas_p = MathApp.transformToCanvasCoords(window_p);
 
             let block = MathApp.findBlockOn(canvas_p);
-            if(block != null)
+            for(let i=0; i < this.blocks.length; i++)
             {
-                return true;
+                let block = this.blocks[i];
+
+                if(MathApp.blockIn(block))
+                {
+                    return true;
+                }               
             }
-            else 
+            return false;
+        }
+
+        MathApp.blockIn = function(block) // 블럭 위에 다른 블럭이 오는지 체크
+        {
+            if(//왼쪽 위 점
+                (MathApp.selected_block.position.x - MathApp.selected_block.size.width/2 >= block.position.x - block.size.width/2 && 
+                MathApp.selected_block.position.x - MathApp.selected_block.size.width/2 <= block.position.x + block.size.width/2 && 
+                MathApp.selected_block.position.y - MathApp.selected_block.size.height/2 >= block.position.y - block.size.height/2 && 
+                MathApp.selected_block.position.y - MathApp.selected_block.size.height/2 <= block.position.y + block.size.height/2)
+                ||//오른쪽 위 점
+                (MathApp.selected_block.position.x + MathApp.selected_block.size.width/2 >= block.position.x - block.size.width/2 && 
+                MathApp.selected_block.position.x + MathApp.selected_block.size.width/2<= block.position.x + block.size.width/2 && 
+                MathApp.selected_block.position.y - MathApp.selected_block.size.height/2 >= block.position.y - block.size.height/2 &&
+                MathApp.selected_block.position.y - MathApp.selected_block.size.height/2 <= block.position.y + block.size.height/2)  
+                ||//왼쪽 아래 점
+                (MathApp.selected_block.position.x - MathApp.selected_block.size.width/2 >= block.position.x - block.size.width/2 && 
+                MathApp.selected_block.position.x - MathApp.selected_block.size.width/2<= block.position.x + block.size.width/2 && 
+                MathApp.selected_block.position.y + MathApp.selected_block.size.height/2 >= block.position.y - block.size.height/2 &&
+                MathApp.selected_block.position.y + MathApp.selected_block.size.height/2 <= block.position.y + block.size.height/2)  
+                ||//오른쪽 아래 점
+                (MathApp.selected_block.position.x + MathApp.selected_block.size.width/2 >= block.position.x - block.size.width/2 && 
+                MathApp.selected_block.position.x + MathApp.selected_block.size.width/2<= block.position.x + block.size.width/2 && 
+                MathApp.selected_block.position.y + MathApp.selected_block.size.height/2 >= block.position.y - block.size.height/2 &&
+                MathApp.selected_block.position.y + MathApp.selected_block.size.height/2 <= block.position.y + block.size.height/2) 
+                && MathApp.selected_block != block 
+            )
+            {
+                alert(MathApp.selected_block.position.x);
+                alert(block.position.x);
+                return block;
+            }
+            else
                 return false;
         }
 
@@ -193,13 +229,16 @@
             let canvas_p = MathApp.transformToCanvasCoords(window_p);
             let block = MathApp.findBlockOn(canvas_p); //아래에 깔리는 부모가 될 블럭 (여러개일 때?)
 
-            wid = 2;    //블럭 갯수 세서
-            let group = new fabric.Group([block, MathApp.selected_block],
-            {
-                left: SYMBOL_WIDTH * wid,
-                top: SYMBOL_HEIGHT
-            });//
-            canvas.add(group);
+            if (!MathApp.canvas.getActiveObject()) {
+                return;
+            }
+            if (MathApp.canvas.getActiveObject().type !== 'activeSelection') {
+                return;
+            }
+
+
+            MathApp.canvas.getActiveObject().toGroup(); //묶기
+            MathApp.canvas.requestRenderAll();
 
         }
 
@@ -240,7 +279,7 @@
                     x <= block.position.x + block.size.width/2 &&
                     y >= block.position.y - block.size.height/2 &&
                     y <= block.position.y + block.size.height/2 &&
-                    block != MathApp.selected_block) // 선택된 블럭과 다른 조건 추가
+                    block != MathApp.selected_block)
                 {
                     return block;
                 }               
