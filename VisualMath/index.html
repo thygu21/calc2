@@ -19,6 +19,7 @@
         const SYMBOL_WIDTH = 50;
         const SYMBOL_HEIGHT = 50;
         let MathApp = {};
+
         MathApp.symbol_paths = {
                 '+':    "add",
                 '-':    "sub",
@@ -44,6 +45,7 @@
         MathApp.selected_block = null;
         MathApp.is_mouse_dragging = false;       
         MathApp.mouse_drag_prev = {x:0, y:0};
+
         MathApp.block_types = {
             UNDEFINED:  "undefind",
             SYMBOL:     "symbol",
@@ -95,9 +97,11 @@
                     x : Math.random() * (this.canvas.width-size.width) + size.width/2,
                     y : Math.random() * (this.canvas.height-size.height) + size.height/2
                 };
+
                 let new_symbol = new MathApp.Symbol(position, size, key);
             }
         }
+
         MathApp.handleMouseDown = function(window_p) {
             if(MathApp.isInCanvas(window_p))
             {
@@ -113,8 +117,10 @@
                     MathApp.selected_block = block;
                     MathApp.selected_block.onSelected();
                 }
+
                 MathApp.is_mouse_dragging = true;
                 MathApp.mouse_drag_prev = canvas_p;
+
                 MathApp.canvas.requestRenderAll();
             }
             else
@@ -134,25 +140,32 @@
                     MathApp.selected_block.translate({x: tx, y: ty});
                 }
                 MathApp.mouse_drag_prev = canvas_p;
+
                 MathApp.canvas.requestRenderAll();
             }
         }
+
         MathApp.handleMouseUp = function(window_p) {
             if(MathApp.is_mouse_dragging)
             {
                 let canvas_p = MathApp.transformToCanvasCoords(window_p);
+
                 MathApp.is_mouse_dragging = false;
                 MathApp.mouse_drag_prev = {x:0, y:0};
+
                 if(MathApp.isInBlock(window_p)) // 마우스 뗄때 좌표를 읽어서 조립 
                 {
                     
                 }
+
                 MathApp.canvas.requestRenderAll();
             }
         }
+
         MathApp.isInBlock = function(window_p) // 블럭 안에 있는지 확인
         {
             let canvas_p = MathApp.transformToCanvasCoords(window_p);
+
             let block = MathApp.findBlockOn(canvas_p);
             for(let i=0; i < this.blocks.length; i++)
             {
@@ -206,9 +219,13 @@
             if (MathApp.canvas.getActiveObject().type !== 'activeSelection') {
                 return;
             }
+
+
             MathApp.canvas.getActiveObject().toGroup(); //묶기
             MathApp.canvas.requestRenderAll();
+
         }
+
         MathApp.transformToCanvasCoords = function(window_p) {
             let rect = MathApp.canvas.getElement().getBoundingClientRect();
             let canvas_p = {
@@ -232,12 +249,15 @@
                 return false;
             }
         }
+
         MathApp.findBlockOn = function(canvas_p) {
             let x = canvas_p.x;
             let y = canvas_p.y;
+
             for(let i=0; i < this.blocks.length; i++)
             {
                 let block = this.blocks[i];
+
                 if( x >= block.position.x - block.size.width/2 &&
                     x <= block.position.x + block.size.width/2 &&
                     y >= block.position.y - block.size.height/2 &&
@@ -254,9 +274,12 @@
             this.position = position;
             this.size = size;
             this.type = MathApp.block_types.UNDEFINED;
+
             this.visual_items = [];
+
             MathApp.blocks.push(this);
         }
+
         MathApp.Block.prototype.onDeselected = function() {
             this.visual_items[this.visual_items.length-1].set({
                 stroke: "rgba(0,0,255,1)"
@@ -270,14 +293,18 @@
                 MathApp.canvas.bringToFront(item);
             });
         }
+
         MathApp.Block.prototype.moveTo = function(p) {
             let tx = p.x - this.position.x;
             let ty = p.y - this.position.y;
+
             this.translate({x: tx, y: ty});
         }
+
         MathApp.Block.prototype.translate = function(v) {
             this.position.x += v.x;
             this.position.y += v.y;
+
             this.visual_items.forEach(item => {
                 item.left += v.x;
                 item.top += v.y;
@@ -308,7 +335,7 @@
             let block = this;
             if (name in MathApp.symbol_paths) 
             {
-                let path = "letter/" + MathApp.symbol_paths[name] + ".jpg";
+                let path = "letter/" + MathApp.symbol_paths[name] + ".jpg";  // 경로 추가
                 fabric.Image.fromURL(path, function(img) {
                     // (0) Background
                     let background = new fabric.Rect({
@@ -320,11 +347,14 @@
                         stroke: "rgba(0,0,0,0)",
                         selectable: false
                     });
+
                     // (1) Image
                     img.scaleToWidth(size.width);
                     img.scaleToHeight(size.height);
+
                     let img_w = img.getScaledWidth();
                     let img_h = img.getScaledHeight();
+
                     img.set({
                         left: position.x - img_w/2,
                         top: position.y - img_h/2,
@@ -352,8 +382,10 @@
                 });
             }
         }
+
         MathApp.Symbol.prototype = Object.create(MathApp.Block.prototype);
         
+
         //
         $(document).ready(function() {
             MathApp.initialize();
@@ -362,3 +394,4 @@
     
 </body>
 </html>
+
