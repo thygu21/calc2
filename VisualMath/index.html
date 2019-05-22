@@ -158,8 +158,7 @@
                     let block = this.blocks[i];
                     if(MathApp.blockIn(block)) // blockIn함수를 통해 선택한 블럭과 다른 겹쳐지는 블럭을 구함 
                     {
-                        alert("찾음");
-                        MathApp.addBlock(canvas_p, block);
+                        //MathApp.addBlock(canvas_p, block);
                     }               
                 }
 
@@ -170,10 +169,10 @@
         MathApp.blockIn = function(block) // 블럭 위에 다른 블럭이 오는지 체크
         {
             if(//선택한 블럭의 중심 좌표가 겹치려는 블럭의 넓이, 높이의 반만큼 더 큰 범위 안에 들어가야 함
-                MathApp.selected_block.position.x > block.position.x - block.size.width/2 - SYMBOL_WIDTH && 
-                MathApp.selected_block.position.x < block.position.x + block.size.width/2 + SYMBOL_WIDTH && 
-                MathApp.selected_block.position.y > block.position.y - block.size.height/2 - SYMBOL_HEIGHT && 
-                MathApp.selected_block.position.y < block.position.y + block.size.height/2 + SYMBOL_HEIGHT &&
+                MathApp.selected_block.position.x > block.position.x - block.size.width/2 - SYMBOL_WIDTH/2 && 
+                MathApp.selected_block.position.x < block.position.x + block.size.width/2 + SYMBOL_WIDTH/2 && 
+                MathApp.selected_block.position.y > block.position.y - block.size.height/2 - SYMBOL_HEIGHT/2 && 
+                MathApp.selected_block.position.y < block.position.y + block.size.height/2 + SYMBOL_HEIGHT/2 &&
                 MathApp.selected_block != block
             )
             {
@@ -183,19 +182,23 @@
                 return false;
         }
 
-        MathApp.addBlock = function(canvas_p, block)
-        {
-            if (!MathApp.canvas.getActiveObject()) {
-                return;
-            }
-            if (MathApp.canvas.getActiveObject().type !== 'activeSelection') {
-                return;
-            }
+        // MathApp.addBlock = function(canvas_p, block)
+        // {
+        //     let group = new fabric.Group();
 
-            MathApp.canvas.getActiveObject().toGroup(); //묶기
-            MathApp.canvas.requestRenderAll();
+        //     MathApp.block.position.x = selected_block.position.x + selected_block.size.width/2;
+        //     MathApp.block.position.y = selected_block.position.y + selected_block.size.height/2;
 
-        }
+        //     group.add(selected_block);
+        //     group.add(block);
+
+        //     MathApp.canvas.add(group);
+        //     MathApp.canvas.setActiveGroup(group);
+
+        //     //selected_block.add(block);
+
+        //     MathApp.canvas.requestRenderAll();
+        // }
 
         MathApp.transformToCanvasCoords = function(window_p) {
             let rect = MathApp.canvas.getElement().getBoundingClientRect();
