@@ -153,30 +153,18 @@
                 MathApp.is_mouse_dragging = false;
                 MathApp.mouse_drag_prev = {x:0, y:0};
 
-                if(MathApp.isInBlock(window_p)) // 조립 
+                for(let i=0; i < this.blocks.length; i++)
                 {
-                    
+                    let block = this.blocks[i];
+                    if(MathApp.blockIn(block)) // blockIn함수를 통해 선택한 블럭과 다른 겹쳐지는 블럭을 구함 
+                    {
+                        alert("찾음");
+                        MathApp.addBlock(canvas_p, block);
+                    }               
                 }
 
                 MathApp.canvas.requestRenderAll();
             }
-        }
-
-        MathApp.isInBlock = function(window_p) // 블럭 안에 있는지 확인
-        {
-            let canvas_p = MathApp.transformToCanvasCoords(window_p);
-
-            let block = MathApp.findBlockOn(canvas_p);
-            for(let i=0; i < this.blocks.length; i++)
-            {
-                let block = this.blocks[i];
-                if(MathApp.blockIn(block)) // blockIn함수를 통해 선택한 블럭과 다른 겹쳐지는 블럭을 구함 
-                {
-                    alert("찾음");
-                    return true;
-                }               
-            }
-            return false;
         }
 
         MathApp.blockIn = function(block) // 블럭 위에 다른 블럭이 오는지 체크
@@ -195,17 +183,14 @@
                 return false;
         }
 
-        MathApp.addBlock = function(window_p)
+        MathApp.addBlock = function(canvas_p, block)
         {
-            let canvas_p = MathApp.transformToCanvasCoords(window_p);
-            let block = MathApp.findBlockOn(canvas_p); //아래에 깔리는 부모가 될 블럭 (여러개일 때?)
             if (!MathApp.canvas.getActiveObject()) {
                 return;
             }
             if (MathApp.canvas.getActiveObject().type !== 'activeSelection') {
                 return;
             }
-
 
             MathApp.canvas.getActiveObject().toGroup(); //묶기
             MathApp.canvas.requestRenderAll();
