@@ -170,10 +170,10 @@
         MathApp.blockIn = function(block) // 블럭 위에 다른 블럭이 오는지 체크
         {
             if(//선택한 블럭의 중심 좌표가 겹치려는 블럭의 넓이, 높이의 반만큼 더 큰 범위 안에 들어가야 함
-                MathApp.selected_block.position.x > block.position.x - block.size.width && 
-                MathApp.selected_block.position.x < block.position.x + block.size.width && 
-                MathApp.selected_block.position.y > block.position.y - block.size.height && 
-                MathApp.selected_block.position.y < block.position.y + block.size.height &&
+                MathApp.selected_block.position.x > block.position.x - block.size.width/2 - SYMBOL_WIDTH && 
+                MathApp.selected_block.position.x < block.position.x + block.size.width/2 + SYMBOL_WIDTH && 
+                MathApp.selected_block.position.y > block.position.y - block.size.height/2 - SYMBOL_HEIGHT && 
+                MathApp.selected_block.position.y < block.position.y + block.size.height/2 + SYMBOL_HEIGHT &&
                 MathApp.selected_block != block
             )
             {
