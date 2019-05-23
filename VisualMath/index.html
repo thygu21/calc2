@@ -98,7 +98,7 @@
                     y : Math.random() * (this.canvas.height-size.height) + size.height/2
                 };
 
-                let new_symbol = new MathApp.Symbol(position, size, key);
+                let new_symbol = new MathApp.Symbol(position, size, key)
             }
         }
 
@@ -184,18 +184,23 @@
 
         MathApp.addBlock = function(canvas_p, block)
         {
-            let group = new fabric.Group();
+            //let group = new fabric.Group();
 
-            block.position.x = MathApp.selected_block.position.x + MathApp.selected_block.size.width/2;
-            block.position.y = MathApp.selected_block.position.y + MathApp.selected_block.size.height/2;
+            MathApp.selected_block.position.x = block.position.x + MathApp.selected_block.size.width; // 옆에 붙이기
+            MathApp.selected_block.position.y = block.position.y;
 
-            group.add(MathApp.selected_block);
-            group.add(block);
+            MathApp.selected_block.visual_items.forEach(item => {
+                item.left = MathApp.selected_block.position.x + MathApp.selected_block.size.width;
+                item.left = MathApp.selected_block.position.y;
+            });
+            
+            // group.add(MathApp.selected_block);
+            // group.add(block);
 
-            MathApp.canvas.add(group);
-            MathApp.canvas.setActiveGroup(group);
+            // MathApp.canvas.add(group);
+            // MathApp.canvas.setActiveGroup(group);
 
-            selected_block.add(block);
+            // selected_block.add(block);
 
             MathApp.canvas.requestRenderAll();
         }
@@ -206,6 +211,7 @@
                 x : window_p.x - rect.left,
                 y : window_p.y - rect.top
             };
+
             return canvas_p;
         }
         
@@ -244,10 +250,11 @@
             return null;
         }
         //
-        MathApp.Block = function(position, size) {
+        MathApp.Block = function(position, size, name) {
             this.position = position;
             this.size = size;
             this.type = MathApp.block_types.UNDEFINED;
+            this.name = name;
 
             this.visual_items = [];
 
@@ -303,7 +310,7 @@
         }
         //
         MathApp.Symbol = function(position, size, name) {
-            MathApp.Block.call(this, position, size);
+            MathApp.Block.call(this, position, size, name); //이름 추가
             this.type = MathApp.block_types.SYMBOL;
             this.name = name;
             let block = this;
@@ -321,7 +328,6 @@
                         stroke: "rgba(0,0,0,0)",
                         selectable: false
                     });
-
                     // (1) Image
                     img.scaleToWidth(size.width);
                     img.scaleToHeight(size.height);
@@ -358,9 +364,7 @@
         }
 
         MathApp.Symbol.prototype = Object.create(MathApp.Block.prototype);
-        
 
-        //
         $(document).ready(function() {
             MathApp.initialize();
         });
