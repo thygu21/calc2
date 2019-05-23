@@ -158,7 +158,7 @@
                     let block = this.blocks[i];
                     if(MathApp.blockIn(block)) // blockIn함수를 통해 선택한 블럭과 다른 겹쳐지는 블럭을 구함 
                     {
-                        //MathApp.addBlock(canvas_p, block);
+                        MathApp.addBlock(canvas_p, block);
                     }               
                 }
 
@@ -182,23 +182,23 @@
                 return false;
         }
 
-        // MathApp.addBlock = function(canvas_p, block)
-        // {
-        //     let group = new fabric.Group();
+        MathApp.addBlock = function(canvas_p, block)
+        {
+            let group = new fabric.Group();
 
-        //     MathApp.block.position.x = selected_block.position.x + selected_block.size.width/2;
-        //     MathApp.block.position.y = selected_block.position.y + selected_block.size.height/2;
+            block.position.x = MathApp.selected_block.position.x + MathApp.selected_block.size.width/2;
+            block.position.y = MathApp.selected_block.position.y + MathApp.selected_block.size.height/2;
 
-        //     group.add(selected_block);
-        //     group.add(block);
+            group.add(MathApp.selected_block);
+            group.add(block);
 
-        //     MathApp.canvas.add(group);
-        //     MathApp.canvas.setActiveGroup(group);
+            MathApp.canvas.add(group);
+            MathApp.canvas.setActiveGroup(group);
 
-        //     //selected_block.add(block);
+            selected_block.add(block);
 
-        //     MathApp.canvas.requestRenderAll();
-        // }
+            MathApp.canvas.requestRenderAll();
+        }
 
         MathApp.transformToCanvasCoords = function(window_p) {
             let rect = MathApp.canvas.getElement().getBoundingClientRect();
