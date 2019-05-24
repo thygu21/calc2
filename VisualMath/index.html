@@ -41,7 +41,7 @@
                 '!':    "exclamation"
         };
         MathApp.blocks = []; //캔버스 전체 블럭 리스트
-        MathApp.blocks.chooseBlock = []; //선택한 블럭 리스트
+        MathApp.blocks.chooseBlock = []; //선택한 블럭 리스트?
         MathApp.selected_block = null;
         MathApp.is_mouse_dragging = false;       
         MathApp.mouse_drag_prev = {x:0, y:0};
@@ -168,40 +168,55 @@
 
         MathApp.blockIn = function(block) // 블럭 위에 다른 블럭이 오는지 체크
         {
-            if(//선택한 블럭의 중심 좌표가 겹치려는 블럭의 넓이, 높이의 반만큼 더 큰 범위 안에 들어가야 함
-                MathApp.selected_block.position.x > block.position.x - block.size.width/2 - SYMBOL_WIDTH/2 && 
-                MathApp.selected_block.position.x < block.position.x + block.size.width/2 + SYMBOL_WIDTH/2 && 
-                MathApp.selected_block.position.y > block.position.y - block.size.height/2 - SYMBOL_HEIGHT/2 && 
-                MathApp.selected_block.position.y < block.position.y + block.size.height/2 + SYMBOL_HEIGHT/2 &&
-                MathApp.selected_block != block
-            )
+            if(MathApp.selected_block != null) // 활성화된 블럭이 없는데 마우스 up을 할경우 뜨는 오류를 방지하기 위함
             {
-                return true;
+                if(//선택한 블럭의 중심 좌표가 겹치려는 블럭의 넓이, 높이의 반만큼 더 큰 범위 안에 들어가야 함
+                    MathApp.selected_block.position.x > block.position.x - block.size.width/2 - SYMBOL_WIDTH/2 && 
+                    MathApp.selected_block.position.x < block.position.x + block.size.width/2 + SYMBOL_WIDTH/2 && 
+                    MathApp.selected_block.position.y > block.position.y - block.size.height/2 - SYMBOL_HEIGHT/2 && 
+                    MathApp.selected_block.position.y < block.position.y + block.size.height/2 + SYMBOL_HEIGHT/2 &&
+                    MathApp.selected_block != block
+                )
+                {
+                    return true;
+                }
+                else
+                    return false;
             }
-            else
-                return false;
         }
 
         MathApp.addBlock = function(canvas_p, block)
         {
-            //let group = new fabric.Group();
+            let group = new fabric.Group();
 
-            MathApp.selected_block.position.x = block.position.x + MathApp.selected_block.size.width; // 옆에 붙이기
+            MathApp.selected_block.position.x = block.position.x + MathApp.selected_block.size.width; // 블럭 옆에 붙이기
             MathApp.selected_block.position.y = block.position.y;
 
-            MathApp.selected_block.visual_items.forEach(item => {
-                item.left = MathApp.selected_block.position.x + MathApp.selected_block.size.width;
-                item.left = MathApp.selected_block.position.y;
-            });
-            
-            // group.add(MathApp.selected_block);
-            // group.add(block);
+            for(i = 0; i < 3; i++) // 이미지 붙이기
+            {
+                MathApp.selected_block.visual_items[i].left = block.visual_items[i].left + MathApp.selected_block.size.width;
+                MathApp.selected_block.visual_items[i].top = block.visual_items[i].top;
 
-            // MathApp.canvas.add(group);
-            // MathApp.canvas.setActiveGroup(group);
+                group.add(MathApp.selected_block.visual_items[i]);
+                group.add(block.visual_items[i]);
+            }
+            MathApp.selected_block = group;
 
-            // selected_block.add(block);
+            let position = { // 그룹 위치 지정 (넓이의 가운데)
+                x : block.position.x + MathApp.selected_block.size.width/2,
+                y : block.position.y
+            };
 
+            let size = { // 그룹 사이즈 지정
+                width : block.size.width + SYMBOL_WIDTH,
+                height : SYMBOL_HEIGHT
+            };
+
+            let name = block.name; // 그룹 이름 지정(이미지와 같음 ex.3)
+
+            MathApp.Block.call(this, position, size, name); // group을 block객체로 생성(블럭구분?)
+
+            MathApp.canvas.add(group);
             MathApp.canvas.requestRenderAll();
         }
 
@@ -242,10 +257,11 @@
                     x <= block.position.x + block.size.width/2 &&
                     y >= block.position.y - block.size.height/2 &&
                     y <= block.position.y + block.size.height/2 &&
-                    block != MathApp.selected_block) // 선택한 블럭과 추가된 블럭이 달라야함
+                    block != MathApp.selected_block && // 선택한 블럭과 추가된 블럭이 달라야함
+                    block.group == false) // 그룹에 있으면 선택하지 않음
                 {
                     return block;
-                }               
+                }
             }
             return null;
         }
@@ -254,7 +270,8 @@
             this.position = position;
             this.size = size;
             this.type = MathApp.block_types.UNDEFINED;
-            this.name = name;
+            this.name = name; // 이름 추가
+            this.group = false; // 그룹에 속해있는 상태를 알려주는 변수
 
             this.visual_items = [];
 
@@ -310,7 +327,7 @@
         }
         //
         MathApp.Symbol = function(position, size, name) {
-            MathApp.Block.call(this, position, size, name); //이름 추가
+            MathApp.Block.call(this, position, size, name); //이름 추가(블럭의 이름으로 블럭에 접근)
             this.type = MathApp.block_types.SYMBOL;
             this.name = name;
             let block = this;
@@ -363,6 +380,34 @@
             }
         }
 
+        MathApp.Symbol = function(position, size, name) { // 그룹 이미지, 바운더리 생성
+            MathApp.Block.call(this, position, size, name); 
+            this.type = MathApp.block_types.makeGroup;
+            this.name = name;
+            let block = this;
+            if (name in MathApp.symbol_paths) 
+            {
+                // (0) Boundary
+                let boundary = new fabric.Rect({
+                    left: position.x - size.width/2,
+                    top: position.y - size.height/2,
+                    width: size.width,
+                    height: size.height,
+                    fill: "rgba(0,0,0,0)",
+                    stroke: "rgba(0,0,255,1)",
+                    strokeWidth: 5,
+                    selectable: false
+                });
+                //
+                MathApp.canvas.add(background);
+                MathApp.canvas.add(boundary);
+                //
+                block.visual_items.push(background);
+                block.visual_items.push(boundary);
+            }
+        }
+
+        MathApp.makeGroup.prototype = Object.create(MathApp.Block.prototype); //그룹 객체 캔버스 구현
         MathApp.Symbol.prototype = Object.create(MathApp.Block.prototype);
 
         $(document).ready(function() {
