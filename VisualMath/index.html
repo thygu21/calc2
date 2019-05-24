@@ -158,7 +158,7 @@
                     let block = this.blocks[i];
                     if(MathApp.blockIn(block)) // blockIn함수를 통해 선택한 블럭과 다른 겹쳐지는 블럭을 구함 
                     {
-                        MathApp.addBlock(canvas_p, block);
+                        MathApp.addBlock(block);
                     }               
                 }
 
@@ -185,10 +185,8 @@
             }
         }
 
-        MathApp.addBlock = function(canvas_p, block)
+        MathApp.addBlock = function(block)
         {
-            let group = new fabric.Group();
-
             MathApp.selected_block.position.x = block.position.x + MathApp.selected_block.size.width; // 블럭 옆에 붙이기
             MathApp.selected_block.position.y = block.position.y;
 
@@ -196,28 +194,35 @@
             {
                 MathApp.selected_block.visual_items[i].left = block.visual_items[i].left + MathApp.selected_block.size.width;
                 MathApp.selected_block.visual_items[i].top = block.visual_items[i].top;
-
-                group.add(MathApp.selected_block.visual_items[i]);
-                group.add(block.visual_items[i]);
             }
-            MathApp.selected_block = group;
+            
+            let group = MathApp.makeGroup(block); // 두 블럭 그룹으로 합치기
 
+            MathApp.selected_block = group; //그룹 선택
+
+            MathApp.canvas.add(group);
+            MathApp.canvas.requestRenderAll();
+        } 
+
+        MathApp.makeGroup = function(block) // 두 블럭 그룹으로 합치기
+        {
+            //-----------그룹 생성------------
             let position = { // 그룹 위치 지정 (넓이의 가운데)
                 x : block.position.x + MathApp.selected_block.size.width/2,
                 y : block.position.y
             };
-
             let size = { // 그룹 사이즈 지정
                 width : block.size.width + SYMBOL_WIDTH,
                 height : SYMBOL_HEIGHT
             };
-
             let name = block.name; // 그룹 이름 지정(이미지와 같음 ex.3)
+            let group = new MathApp.Group(position, size, name, block); // 그룹을 블럭 객체로 만들어 블럭프로토타입의 함수 사용
+            //-----------그룹 생성------------
 
-            MathApp.Block.call(this, position, size, name); // group을 block객체로 생성(블럭구분?)
+            MathApp.selected_block.group = true; //그룹안에 들어갔음 표시
+            block.group = true;
 
-            MathApp.canvas.add(group);
-            MathApp.canvas.requestRenderAll();
+            return group;
         }
 
         MathApp.transformToCanvasCoords = function(window_p) {
@@ -258,7 +263,8 @@
                     y >= block.position.y - block.size.height/2 &&
                     y <= block.position.y + block.size.height/2 &&
                     block != MathApp.selected_block && // 선택한 블럭과 추가된 블럭이 달라야함
-                    block.group == false) // 그룹에 있으면 선택하지 않음
+                    !block.group // 그룹에 있으면 선택 안함
+                )
                 {
                     return block;
                 }
@@ -273,6 +279,7 @@
             this.name = name; // 이름 추가
             this.group = false; // 그룹에 속해있는 상태를 알려주는 변수
 
+            this.insideBlock = [];
             this.visual_items = [];
 
             MathApp.blocks.push(this);
@@ -380,34 +387,39 @@
             }
         }
 
-        MathApp.Symbol = function(position, size, name) { // 그룹 이미지, 바운더리 생성
-            MathApp.Block.call(this, position, size, name); 
-            this.type = MathApp.block_types.makeGroup;
+        MathApp.Group = function(position, size, name, component) { // 그룹 이미지 생성
+            MathApp.Block.call(this, position, size, name); //그룹 이미지를 묶어줄 그룹 객체 생성
+            this.type = MathApp.block_types.Group;
             this.name = name;
             let block = this;
-            if (name in MathApp.symbol_paths) 
+            let group = new fabric.Group();
+
+            // (0), (1) 기존의 블럭에서 가져오기
+            for(let i = 0; i < 2; i++)
             {
-                // (0) Boundary
-                let boundary = new fabric.Rect({
-                    left: position.x - size.width/2,
-                    top: position.y - size.height/2,
-                    width: size.width,
-                    height: size.height,
-                    fill: "rgba(0,0,0,0)",
-                    stroke: "rgba(0,0,255,1)",
-                    strokeWidth: 5,
-                    selectable: false
-                });
-                //
-                MathApp.canvas.add(background);
-                MathApp.canvas.add(boundary);
-                //
-                block.visual_items.push(background);
-                block.visual_items.push(boundary);
+                group.add(MathApp.selected_block.visual_items[i]); //그룹에 이미지 넣기
+                group.add(block.visual_items[i]);
             }
+
+            // (2) Boundary
+            let boundary = new fabric.Rect({
+                left: position.x - size.width/2,
+                top: position.y - size.height/2,
+                width: size.width,
+                height: size.height,
+                fill: "rgba(0,0,0,0)",
+                stroke: "rgba(0,0,255,1)",
+                strokeWidth: 5,
+                selectable: false
+            });
+            
+            group.add(boundary);
+
+            MathApp.canvas.add(group); // 그룹이미지 캔버스에 띄우기
+            block.visual_items[0] = group; // 그룹객체와 그룹 이미지 묶어서 control (그룹이므로 이미지 하나만 사용)
         }
 
-        MathApp.makeGroup.prototype = Object.create(MathApp.Block.prototype); //그룹 객체 캔버스 구현
+        MathApp.Group.prototype = Object.create(MathApp.Block.prototype); //그룹 객체 캔버스 구현
         MathApp.Symbol.prototype = Object.create(MathApp.Block.prototype);
 
         $(document).ready(function() {
