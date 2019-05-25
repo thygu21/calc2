@@ -135,26 +135,12 @@
                 {
                     let tx = canvas_p.x - MathApp.mouse_drag_prev.x;
                     let ty = canvas_p.y - MathApp.mouse_drag_prev.y;
-                    MathApp.selected_block.translate({x: tx, y: ty});
-                    if(MathApp.selected_block.next != null) // next와 같이 움직이기
+
+                    let nextblock = MathApp.selected_block.head;
+                    while(nextblock != null) // next와 같이 움직이기
                     {
-                        let nextblock = MathApp.selected_block.next;
                         nextblock.translate({x: tx, y: ty});
-                        while(nextblock.next != null)
-                        {
-                            nextblock = nextblock.next;
-                            nextblock.translate({x: tx, y: ty});
-                        }
-                    }
-                    if(MathApp.selected_block.head != MathApp.selected_block) // head와 같이 움직이기
-                    {
-                        let headblock = MathApp.selected_block.head;
-                        headblock.translate({x: tx, y: ty});
-                        while(headblock.head != headblock)
-                        {
-                            headblock = headblock.head;
-                            headblock.translate({x: tx, y: ty});
-                        }
+                        nextblock = nextblock.next;
                     }
                 }
                 MathApp.mouse_drag_prev = canvas_p;
@@ -187,56 +173,59 @@
         {
             if(MathApp.selected_block != null) // 활성화된 블럭이 없는데 마우스 up을 할경우 뜨는 오류를 방지하기 위함
             {
-                if(//선택한 블럭의 중심 좌표가 겹치려는 블럭의 넓이, 높이의 반만큼 더 큰 범위 안에 들어가야 함
-                    MathApp.selected_block != block &&
-                    (MathApp.selected_block.position.x > block.position.x - block.size.width/2 - SYMBOL_WIDTH/2 && 
-                    MathApp.selected_block.position.x < block.position.x + block.size.width/2 + SYMBOL_WIDTH/2 && 
-                    MathApp.selected_block.position.y > block.position.y - block.size.height/2 - SYMBOL_HEIGHT/2 && 
-                    MathApp.selected_block.position.y < block.position.y + block.size.height/2 + SYMBOL_HEIGHT/2)
-                )
+                let node = MathApp.selected_block.head;
+                while(node != null)
                 {
-                    return true;
+                    if(//4꼭지점중 하나라도 블럭 내부에 위치해야 함
+                        MathApp.selected_block != block &&
+                        (MathApp.selected_block.position.x > block.position.x - block.size.width/2 - SYMBOL_WIDTH/2 && 
+                        MathApp.selected_block.position.x < block.position.x + block.size.width/2 + SYMBOL_WIDTH/2 && 
+                        MathApp.selected_block.position.y > block.position.y - block.size.height/2 - SYMBOL_HEIGHT/2 && 
+                        MathApp.selected_block.position.y < block.position.y + block.size.height/2 + SYMBOL_HEIGHT/2)
+                        ||
+                        ()
+                    )
+                    {
+                        return true;
+                    }
+                    node = node.next;
                 }
-                else
-                    return false;
+                return false;
             }
         }
 
         MathApp.addBlock = function(block)
         {
-            while(block.next!=null)
+            while(block.next!=null) //붙여지는 블럭, 맨 뒤의 노드를 찾는다.
                 block = block.next;
 
-            while(MathApp.selected_block.head!=MathApp.selected_block)
-                MathApp.selected_block = MathApp.selected_block.head;
-            
-            block.next = MathApp.selected_block;
-            MathApp.selected_block.head = block;
+            block.next = MathApp.selected_block.head;
 
-            MathApp.attach(MathApp.selected_block); // 헤드 옆에 붙이는 함수
-
-            if(MathApp.selected_block.next != null) // next와 같이 움직이기
+            let nextblock = MathApp.selected_block.head;
+            while(nextblock != null)
             {
-                let nextblock = MathApp.selected_block.next;
-                MathApp.attach(nextblock);
-                while(nextblock.next != null)
-                {
-                    nextblock = nextblock.next;
-                    MathApp.attach(nextblock);
-                }
+                nextblock.head = block.head; // 붙이는 블럭의 헤드를 전부 옮긴다.
+                nextblock = nextblock.next;
             }
+
+            MathApp.attach(block); // 옆에 붙이는 함수
+
             MathApp.canvas.requestRenderAll();
         } 
 
         MathApp.attach = function(block)
         {
-            block.position.x = block.head.position.x + block.size.width; // 블럭 옆에 붙이기
-            block.position.y = block.head.position.y;
-
-            for(i = 0; i < 3; i++) // 이미지 붙이기
+            while(block.next != null)
             {
-                block.visual_items[i].left = block.head.visual_items[i].left + block.size.width;
-                block.visual_items[i].top = block.head.visual_items[i].top;
+                block.next.position.x = block.position.x + block.size.width; // 블럭 옆에 붙이기
+                block.next.position.y = block.position.y;
+
+                for(i = 0; i < 3; i++) // 이미지 붙이기
+                {
+                    block.next.visual_items[i].left = block.visual_items[i].left + block.size.width;
+                    block.next.visual_items[i].top = block.visual_items[i].top;
+                }
+                block = block.next
             }
         }
 
@@ -294,7 +283,6 @@
             this.next = null;
             this.head = this;
 
-            this.insideBlock = [];
             this.visual_items = [];
 
             MathApp.blocks.push(this);
