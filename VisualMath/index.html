@@ -84,6 +84,13 @@
                 let p = {x: event.pageX, y: event.pageY};
                 MathApp.handleMouseMove(p);
             });
+            function onChange(options) {
+                options.target.setCoords();
+                canvas.forEachObject(function(obj) {
+                if (obj === options.target) return;
+                obj.set('opacity' ,options.target.intersectsWithObject(obj) ? 0.5 : 1);
+                });
+            }
         }
         MathApp.handleKeyPress = function(key) {
             if (key in this.symbol_paths) 
@@ -174,20 +181,36 @@
         {
             if(MathApp.selected_block != null) // 활성화된 블럭이 없는데 마우스 up을 할경우 뜨는 오류를 방지하기 위함
             {
+                let node = MathApp.selected_block.head;
+
                 if(//head or tail노드가 붙이려는 블럭에 인접해야함
-                    MathApp.selected_block != block &&
-                    MathApp.selected_block.position.x > block.position.x - block.size.width && 
-                    MathApp.selected_block.position.x < block.position.x + block.size.width && 
-                    MathApp.selected_block.position.y > block.position.y - block.size.height && 
-                    MathApp.selected_block.position.y < block.position.y + block.size.height
+                    node != block &&
+                    node.position.x > block.position.x - block.size.width && 
+                    node.position.x < block.position.x + block.size.width && 
+                    node.position.y > block.position.y - block.size.height && 
+                    node.position.y < block.position.y + block.size.height
                 )
                 {
                     return true;
                 }
-                else
+
+                while(node.next != null)
                 {
-                    return false;
+                    node = node.next;
+
+                    if(//head or tail노드가 붙이려는 블럭에 인접해야함
+                        node != block &&
+                        node.position.x > block.position.x - block.size.width && 
+                        node.position.x < block.position.x + block.size.width && 
+                        node.position.y > block.position.y - block.size.height && 
+                        node.position.y < block.position.y + block.size.height
+                    )
+                    {
+                        return true;
+                    }
                 }
+
+                return false;
             }
         }
 
