@@ -90,7 +90,7 @@
                 fill: '#9FCAEC',
                 selectable: false
             });
-            var ex3 = new fabric.IText('삭제 ESC', {
+            var ex3 = new fabric.IText('삭제 DEL', {
                 left: 900,
                 top: 70,
                 fontSize: 18,
@@ -127,10 +127,9 @@
                     try
                     {
                         result = parser.eval(result).toString();
-                        let tokens = result.split(' ');
-                        if(tokens[0] == 'function')
+                        if(result.indexOf("function") != -1)
                         {
-                            result = tokens[0];
+                            result = "function";
                         }
                         MathApp.calcResult(result); // 계산 결과 블럭 생성 함수
                     }
@@ -141,7 +140,16 @@
 
                     MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
                 }
-                if(event.which == 13)//enter 분해 head와 next를 초기화한다.
+                if(event.which == 46)//삭제
+                {   
+                    let node = MathApp.selected_block.head;
+
+                    while(node.next != null)
+                    {
+
+                    }
+                }
+                if(event.which == 13)//분해 head와 next를 초기화한다.
                 {
                     MathApp.selected_block.onDeselected(); //border 지우기
 
