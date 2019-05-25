@@ -195,11 +195,10 @@
 
             let newNode = new MathApp.Symbol(position, size, result[0]); // 처음 노드 생성
             beforeNode = newNode;
-
             for(i = 1; i < result.length; i++)
             {
-                let position = { //한칸씩 옆에 만들기
-                    x : newNode.position.x + SYMBOL_WIDTH*i, 
+                position = { //한칸씩 옆에 만들기
+                    x : newNode.position.x + SYMBOL_WIDTH, 
                     y : newNode.position.y
                 };
                 
@@ -292,6 +291,11 @@
                     if(MathApp.blockIn(block)) // blockIn함수를 통해 선택한 블럭과 다른 겹쳐지는 블럭을 구함 
                     {
                         MathApp.addBlock(block);
+                        MathApp.attach(block); // 옆에 노드 붙이는 함수
+
+                        block.onSelected(); // 옆에 이미지 붙이는 함수
+
+                        MathApp.canvas.requestRenderAll();
                         break;
                     }
                 }
@@ -351,11 +355,6 @@
                 nextblock = nextblock.next;
                 nextblock.head = block.head; // 붙이는 블럭의 헤드를 전부 옮긴다.
             }
-
-            MathApp.attach(block); // 옆에 붙이는 함수
-            block.onSelected();
-
-            MathApp.canvas.requestRenderAll();
         }
 
         MathApp.attach = function(block)
@@ -370,7 +369,8 @@
                     block.next.visual_items[i].left = block.visual_items[i].left + block.size.width;
                     block.next.visual_items[i].top = block.visual_items[i].top;
                 }
-                block = block.next
+
+                block = block.next;
             }
         }
 
