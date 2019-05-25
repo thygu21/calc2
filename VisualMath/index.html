@@ -90,7 +90,7 @@
                 fill: '#9FCAEC',
                 selectable: false
             });
-            var ex3 = new fabric.IText('삭제 DEL', {
+            var ex3 = new fabric.IText('삭제 CTRL + backspace', {
                 left: 900,
                 top: 70,
                 fontSize: 18,
@@ -131,7 +131,7 @@
                         {
                             result = "function";
                         }
-                        MathApp.calcResult(result); // 계산 결과 블럭 생성 함수
+                        MathApp.stringToBlock(result); // 계산 결과 블럭화
                     }
                     catch (e)
                     {
@@ -140,13 +140,27 @@
 
                     MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
                 }
-                if(event.which == 46)//삭제
-                {   
+                if(event.which == 10)//ctrl + enter
+                {
                     let node = MathApp.selected_block.head;
+                    let result = node.name;
 
                     while(node.next != null)
                     {
-
+                        node = node.next;
+                        result += node.name;
+                    }
+                    
+                    MathApp.stringToBlock(result); // 복사 결과 블럭화
+                }
+                if(event.which == 127)//ctrl + backspace
+                {   
+                    let node = MathApp.selected_block.head;
+                    node.destroy();
+                    while(node.next != null)
+                    {
+                        node = node.next
+                        node.destroy();
                     }
                 }
                 if(event.which == 13)//분해 head와 next를 초기화한다.
@@ -186,7 +200,7 @@
             });
         }
 
-        MathApp.calcResult = function(result)
+        MathApp.stringToBlock = function(result)
         {
             let beforeNode; //일렬로 붙이기 위한 노드변수 
 
