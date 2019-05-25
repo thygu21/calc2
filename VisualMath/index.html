@@ -63,14 +63,106 @@
                 this.symbol_paths[key] = value;
             }
             this.canvas = new fabric.Canvas("c", {
-                backgroundColor: "#eee",
+                backgroundColor: "#333",
                 hoverCursor: "default",
-                selection: false
+                selection: false,
             });
+            var textbox = new fabric.IText('블록 계산기', {
+                left: 20,
+                top: 20,
+                fill: '#9FCAEC',
+                fontFamily: '고딕',
+                selectable: false
+            });
+            var ex1 = new fabric.IText('계산 SPACE', {
+                left: 900,
+                top: 20,
+                fontSize: 18,
+                fontFamily: '고딕',
+                fill: '#9FCAEC',
+                selectable: false
+            });
+            var ex2 = new fabric.IText('복사 CTRL', {
+                left: 900,
+                top: 45,
+                fontSize: 18,
+                fontFamily: '고딕',
+                fill: '#9FCAEC',
+                selectable: false
+            });
+            var ex3 = new fabric.IText('삭제 ESC', {
+                left: 900,
+                top: 70,
+                fontSize: 18,
+                fontFamily: '고딕',
+                fill: '#9FCAEC',
+                selectable: false
+            });
+            var ex4 = new fabric.IText('분해 ENTER', {
+                left: 900,
+                top: 95,
+                fontSize: 18,
+                fontFamily: '고딕',
+                fill: '#9FCAEC',
+                selectable: false
+            });
+            this.canvas.add(ex1, ex2, ex3, ex4, textbox);
             //
             $(document).keypress(function(event) {
                 let key = String.fromCharCode(event.which);
                 MathApp.handleKeyPress(key);
+                if(event.which == 32) // 계산
+                {
+                    MathApp.selected_block.onDeselected(); //border 지우기
+
+                    let node = MathApp.selected_block.head;
+                    let result = node.name;
+
+                    while(node.next != null)
+                    {
+                        node = node.next
+                        result += node.name;
+                    }
+
+                    try
+                    {
+                        result = parser.eval(result).toString();
+                        let tokens = result.split(' ');
+                        if(tokens[0] == 'function')
+                        {
+                            result = tokens[0];
+                        }
+                        MathApp.calcResult(result); // 계산 결과 블럭 생성 함수
+                    }
+                    catch (e)
+                    {
+                        console.log(e);
+                    }
+
+                    MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
+                }
+                if(event.which == 13)//enter 분해 head와 next를 초기화한다.
+                {
+                    MathApp.selected_block.onDeselected(); //border 지우기
+
+                    let node = MathApp.selected_block.head;
+                    x = node.next; // next 임시저장
+                    node.head = node;
+                    node.next = null;
+                    node = x; // 임시 저장한 next불러오기
+
+                    while(node != null)
+                    {
+                        node.head = node;
+                        x = node.next;
+                        node.next = null;
+                        node = x;
+                    }
+
+                    MathApp.selected_block = null; // 선택블럭 해제
+
+                    MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
+                }
             });
             $(document).mousedown(function(event) {
                 let p = {x: event.pageX, y: event.pageY};
@@ -84,14 +176,42 @@
                 let p = {x: event.pageX, y: event.pageY};
                 MathApp.handleMouseMove(p);
             });
-            function onChange(options) {
-                options.target.setCoords();
-                canvas.forEachObject(function(obj) {
-                if (obj === options.target) return;
-                obj.set('opacity' ,options.target.intersectsWithObject(obj) ? 0.5 : 1);
-                });
+        }
+
+        MathApp.calcResult = function(result)
+        {
+            let beforeNode; //일렬로 붙이기 위한 노드변수 
+
+            let size = {
+                width : SYMBOL_WIDTH,
+                height : SYMBOL_HEIGHT
+            };
+            let position = { // 처음 노드 위치
+                x : MathApp.selected_block.head.position.x,
+                y : MathApp.selected_block.head.position.y + 100
+            };
+
+            MathApp.selected_block = null; // 선택블럭 해제
+
+            let newNode = new MathApp.Symbol(position, size, result[0]); // 처음 노드 생성
+            beforeNode = newNode;
+
+            for(i = 1; i < result.length; i++)
+            {
+                let position = { //한칸씩 옆에 만들기
+                    x : newNode.position.x + SYMBOL_WIDTH*i, 
+                    y : newNode.position.y
+                };
+                
+                newNode = new MathApp.Symbol(position, size, result[i]);
+
+                MathApp.selected_block = newNode;
+                MathApp.addBlock(beforeNode); //beforeNode에 newNode붙이기
+
+                beforeNode = newNode;
             }
         }
+
         MathApp.handleKeyPress = function(key) {
             if (key in this.symbol_paths) 
             {
@@ -106,6 +226,7 @@
 
                 let new_symbol = new MathApp.Symbol(position, size, key)
             }
+            
         }
 
         MathApp.handleMouseDown = function(window_p) {
@@ -171,19 +292,21 @@
                     if(MathApp.blockIn(block)) // blockIn함수를 통해 선택한 블럭과 다른 겹쳐지는 블럭을 구함 
                     {
                         MathApp.addBlock(block);
+                        break;
                     }
                 }
                 MathApp.canvas.requestRenderAll();
             }
         }
-
+        
+        
         MathApp.blockIn = function(block) // 블럭 위에 다른 블럭이 오는지 체크`
         {
             if(MathApp.selected_block != null) // 활성화된 블럭이 없는데 마우스 up을 할경우 뜨는 오류를 방지하기 위함
             {
                 let node = MathApp.selected_block.head;
 
-                if(//head or tail노드가 붙이려는 블럭에 인접해야함
+                if(//head
                     node != block &&
                     node.position.x > block.position.x - block.size.width && 
                     node.position.x < block.position.x + block.size.width && 
@@ -198,7 +321,7 @@
                 {
                     node = node.next;
 
-                    if(//head or tail노드가 붙이려는 블럭에 인접해야함
+                    if(//head.next to tail노드가 붙이려는 블럭에 인접해야함
                         node != block &&
                         node.position.x > block.position.x - block.size.width && 
                         node.position.x < block.position.x + block.size.width && 
@@ -230,6 +353,7 @@
             }
 
             MathApp.attach(block); // 옆에 붙이는 함수
+            block.onSelected();
 
             MathApp.canvas.requestRenderAll();
         }
@@ -308,27 +432,43 @@
 
             MathApp.blocks.push(this);
         }
-
-        MathApp.linkedList = function() // 그룹 설정
+        //선택된 블럭은 하나지만 그 블럭과 연결된 모든 블럭들의 선택, 비선택 UI수정
+        MathApp.Block.prototype.onSelected = function() 
         {
-            this.head = this;
-            this.tail = null;
-            
-            let linkedList = [];
+            let node = this.head;
+            node.selectChange();
+            while(node.next != null)
+            {
+                node = node.next;
+                node.selectChange();
+            }
         }
 
-        MathApp.Block.prototype.onDeselected = function() {
+        MathApp.Block.prototype.selectChange = function()
+        {
             this.visual_items[this.visual_items.length-1].set({
-                stroke: "rgba(0,0,255,1)"
-            });
-            
-        }
-        MathApp.Block.prototype.onSelected = function() {
-            this.visual_items[this.visual_items.length-1].set({
-                stroke: "rgba(255,0,0,1)"
+                stroke: "rgba(102,175,233)"
             });
             this.visual_items.forEach(item => {
                 MathApp.canvas.bringToFront(item);
+            });
+        }
+    
+        MathApp.Block.prototype.onDeselected = function() 
+        {
+            let node = this.head;
+            node.deselectChange();
+            while(node.next != null)
+            {
+                node = node.next;
+                node.deselectChange();
+            }
+        }
+
+        MathApp.Block.prototype.deselectChange = function() 
+        {
+            this.visual_items[this.visual_items.length-1].set({
+                stroke: "rgba(255,255,255)"
             });
         }
 
@@ -388,7 +528,7 @@
                     });
                     // (1) Image
                     img.scaleToWidth(size.width);
-                    img.scaleToHeight(size.height);
+                    img.scaleToHeight(size.height-10);
 
                     let img_w = img.getScaledWidth();
                     let img_h = img.getScaledHeight();
@@ -405,8 +545,7 @@
                         width: size.width,
                         height: size.height,
                         fill: "rgba(0,0,0,0)",
-                        stroke: "rgba(0,0,255,1)",
-                        strokeWidth: 5,
+                        strokeWidth: 2,
                         selectable: false
                     });
                     //
