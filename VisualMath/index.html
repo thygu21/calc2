@@ -163,8 +163,8 @@
 
                         while(node != null)
                         {
-                            node.head = node;
                             x = node.next;
+                            node.head = node;
                             node.next = null;
                             node = x;
                         }
