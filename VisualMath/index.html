@@ -5,12 +5,12 @@
 	<title>Direct Manipulation of Math Symbols</title>
 </head>
 
-<body>
+<body style="background-color: #444">
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js' type='text/javascript'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.4.6/fabric.min.js" type="text/javascript"></script>
     <script src="math.min.js" type="text/javascript"></script>
 
-    <canvas id="c" width="1024" height="768">
+    <canvas  id="c" width="1024" height="768">
         Canvas not supported
     </canvas>
 
@@ -75,7 +75,7 @@
                 selectable: false
             });
             var ex1 = new fabric.IText('계산 SPACE', {
-                left: 900,
+                left: 860,
                 top: 20,
                 fontSize: 18,
                 fontFamily: '고딕',
@@ -83,15 +83,15 @@
                 selectable: false
             });
             var ex2 = new fabric.IText('복사 CTRL', {
-                left: 900,
+                left: 860,
                 top: 45,
                 fontSize: 18,
                 fontFamily: '고딕',
                 fill: '#9FCAEC',
                 selectable: false
             });
-            var ex3 = new fabric.IText('삭제 CTRL + backspace', {
-                left: 900,
+            var ex3 = new fabric.IText('전체삭제 DEL', {
+                left: 860,
                 top: 70,
                 fontSize: 18,
                 fontFamily: '고딕',
@@ -99,92 +99,142 @@
                 selectable: false
             });
             var ex4 = new fabric.IText('분해 ENTER', {
-                left: 900,
+                left: 860,
                 top: 95,
                 fontSize: 18,
                 fontFamily: '고딕',
                 fill: '#9FCAEC',
                 selectable: false
             });
-            this.canvas.add(ex1, ex2, ex3, ex4, textbox);
+            var ex5 = new fabric.IText('삭제 BACKSPACE', {
+                left: 860,
+                top: 120,
+                fontSize: 18,
+                fontFamily: '고딕',
+                fill: '#9FCAEC',
+                selectable: false
+            });
+            this.canvas.add(ex1, ex2, ex3, ex4, ex5, textbox);
             //
             $(document).keypress(function(event) {
                 let key = String.fromCharCode(event.which);
                 MathApp.handleKeyPress(key);
-                if(event.which == 32) // 계산
+                if(MathApp.selected_block != null)
                 {
-                    MathApp.selected_block.onDeselected(); //border 지우기
-
-                    let node = MathApp.selected_block.head;
-                    let result = node.name;
-
-                    while(node.next != null)
+                    if(event.which == 32) // 계산 space
                     {
-                        node = node.next
-                        result += node.name;
-                    }
+                        MathApp.selected_block.onDeselected(); //border 지우기
 
-                    try
-                    {
-                        result = parser.eval(result).toString();
-                        if(result.indexOf("function") != -1)
+                        let node = MathApp.selected_block.head;
+                        let result = node.name;
+
+                        while(node.next != null)
                         {
-                            result = "function";
+                            node = node.next
+                            result += node.name;
                         }
-                        MathApp.stringToBlock(result); // 계산 결과 블럭화
-                    }
-                    catch (e)
-                    {
-                        console.log(e);
-                    }
+                        try
+                        {
+                            result = parser.eval(result).toString();
+                            if(result.indexOf("function") != -1)
+                            {
+                                result = "function";
+                            }
+                            MathApp.stringToBlock(result); // 계산 결과 블럭화
+                        }
+                        catch (e)
+                        {
+                            MathApp.stringToBlock("error");
+                        }
 
-                    MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
-                }
-                if(event.which == 10)//ctrl + enter
-                {
-                    let node = MathApp.selected_block.head;
-                    let result = node.name;
+                        MathApp.selected_block = null; // 선택블럭 해제
 
-                    while(node.next != null)
-                    {
-                        node = node.next;
-                        result += node.name;
+                        MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
                     }
-                    
-                    MathApp.stringToBlock(result); // 복사 결과 블럭화
-                }
-                if(event.which == 127)//ctrl + backspace
-                {   
-                    let node = MathApp.selected_block.head;
-                    node.destroy();
-                    while(node.next != null)
+                    if(event.which == 13)//분해 enter
                     {
-                        node = node.next
-                        node.destroy();
-                    }
-                }
-                if(event.which == 13)//분해 head와 next를 초기화한다.
-                {
-                    MathApp.selected_block.onDeselected(); //border 지우기
+                        MathApp.selected_block.onDeselected(); //border 지우기
 
-                    let node = MathApp.selected_block.head;
-                    x = node.next; // next 임시저장
-                    node.head = node;
-                    node.next = null;
-                    node = x; // 임시 저장한 next불러오기
-
-                    while(node != null)
-                    {
+                        let node = MathApp.selected_block.head;
+                        x = node.next; // next 임시저장
                         node.head = node;
-                        x = node.next;
                         node.next = null;
-                        node = x;
+                        node = x; // 임시 저장한 next불러오기
+
+                        while(node != null)
+                        {
+                            node.head = node;
+                            x = node.next;
+                            node.next = null;
+                            node = x;
+                        }
+
+                        MathApp.selected_block = null; // 선택블럭 해제
+
+                        MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
                     }
-
-                    MathApp.selected_block = null; // 선택블럭 해제
-
-                    MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
                 }
+
+                event.stopImmediatePropagation();
+            });
+            $(document).keydown(function(event) // DEL, CTRL 키 인식을 위함
+            {
+                if(MathApp.selected_block != null)
+                {
+                    if(event.which == 17)//ctrl 복사
+                    {
+                        MathApp.selected_block.onDeselected(); //border 지우기
+
+                        let node = MathApp.selected_block.head;
+                        let result = node.name;
+
+                        while(node.next != null)
+                        {
+                            node = node.next;
+                            result += node.name;
+                        }
+                        
+                        MathApp.stringToBlock(result); // 복사 결과 블럭화
+
+                        MathApp.selected_block = null;
+                        MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
+                    }
+                    if(event.which == 46)//삭제 del
+                    {   
+                        let node = MathApp.selected_block.head;
+                        node.destroy();
+                        while(node.next != null)
+                        {
+                            node = node.next
+                            node.destroy();
+                        }
+
+                        MathApp.selected_block = null;
+                        MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
+                    }
+                    if(event.which == 8)//마지막 블럭 삭제
+                    {
+                        MathApp.selected_block = MathApp.selected_block.head; //연쇄적으로 지우기 위한 설정
+                        let node = MathApp.selected_block;
+                        if(node.next == null) // 노드가 하나 뿐이라면 그 노드 삭제하고 리턴
+                        {
+                            node.destroy();
+                            MathApp.selected_block = null;
+                            return;
+                        }
+
+                        while(node.next.next != null) // 다음 노드가 마지막이면 반복 탈출
+                        {
+                            node = node.next;
+                        }
+
+                        node.next.destroy(); // 마지막 노드 삭제
+                        node.next = null; //링크 해제                        
+
+                        MathApp.canvas.requestRenderAll(); // 선택 해제됨 반영
+                    }
+                }
+                event.stopImmediatePropagation();
             });
             $(document).mousedown(function(event) {
                 let p = {x: event.pageX, y: event.pageY};
@@ -202,6 +252,8 @@
 
         MathApp.stringToBlock = function(result)
         {
+            result = result.replace(/ /g,""); //정규식을 통한 공백 제거 
+
             let beforeNode; //일렬로 붙이기 위한 노드변수 
 
             let size = {
@@ -228,6 +280,7 @@
 
                 MathApp.selected_block = newNode;
                 MathApp.addBlock(beforeNode); //beforeNode에 newNode붙이기
+
 
                 beforeNode = newNode;
             }
@@ -512,11 +565,6 @@
         }
         
         MathApp.Block.prototype.destroy = function() {
-            if(this == MathApp.selected_block)
-            {
-                MathApp.selected_block = null;
-                this.onDeselected();
-            }
             this.visual_items.forEach(item => {
                 MathApp.canvas.remove(item);
             });
